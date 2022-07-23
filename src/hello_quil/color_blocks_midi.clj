@@ -11,19 +11,19 @@
 
 (defn handle-midi-event
   [event _timestamp]
-  (println "Midi Event:" event)
+  ;;(println "Midi Event:" event)
   (let [{:keys [command channel key velocity] :as info} (unc/info event)
         old-notes (:notes @state-atom)]
-    (println command info)
+    ;;(println command info)
     (case command
       :on  (swap! state-atom update :notes assoc key info)
       :off (swap! state-atom update :notes dissoc key)
-      ;; FIXME do we need this?
       :default)
     (let [new-notes (:notes @state-atom)]
       (when (and (not (seq old-notes)) (seq new-notes))
         (swap! state-atom update :frame inc)))
-    (println "STATE" state-atom)))
+    ;;(println "STATE" state-atom)
+    ))
 
 (def midi-device-description "IAC Driver IAC Bus 1")
 
@@ -137,11 +137,11 @@
    draw-triangle])
 
 (defn draw []
-  (println "DRAW" @state-atom)
-  (let [{:keys [frame]} @state-atom
+  ;;(println "DRAW" @state-atom)
+  (let [{:keys [frame palette-idx]} @state-atom
         num (mod frame 4)
         shape-idx (mod (int (/ frame 4)) (count shapes))
-        colors (nth palettes (:palette-idx @state-atom))]
+        colors (nth palettes palette-idx)]
 
     (when (zero? num)
       (clear-screen nil))
@@ -155,7 +155,7 @@
     (prn "hey-pressed " k)
     (case k
       :space (swap! state-atom update :palette-idx #(mod (inc %) (count palettes)))
-      (q/redraw))))
+      :default)))
 
 (q/defsketch demo
   :title "midi quil fun"
