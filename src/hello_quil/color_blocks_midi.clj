@@ -1,41 +1,15 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [uncomplicate.commons.core :as unc]
-            [uncomplicate.clojure-sound.core :as cs]
-            [uncomplicate.clojure-sound.midi :as midi]))
+            [hello-quil.midi-util :as midi]))
 
-(def state-atom (atom {:palette-idx 0
-                       :frame 0
-                       :notes {}}))
-
-(defn handle-midi-event
-  [event _timestamp]
-  ;;(println "Midi Event:" event)
-  (let [{:keys [command channel key velocity] :as info} (unc/info event)
-        old-notes (:notes @state-atom)]
-    ;;(println command info)
-    (case command
-      :on  (swap! state-atom update :notes assoc key info)
-      :off (swap! state-atom update :notes dissoc key)
-      :default)
-    (let [new-notes (:notes @state-atom)]
-      (when (and (not (seq old-notes)) (seq new-notes))
-        (swap! state-atom update :frame inc)))
-    ;;(println "STATE" state-atom)
-    ))
-
+;; Ideally should be configurable instead of hard-coded
 (def midi-device-description "IAC Driver IAC Bus 1")
 
-(def midi-device
-  (->> (midi/device-info)
-       (filter #(= midi-device-description  (unc/info % :description)))
-       (map midi/device)
-       (filter midi/transmitter?)
-       first))
-
-(cs/open! midi-device)
-(cs/connect! midi-device (midi/receiver handle-midi-event))
+(def state-atom (atom {:midi-dev nil
+                       :palette-idx 0
+                       :frame 0
+                       :notes {}}))
 
 (def palettes
   [
@@ -73,7 +47,32 @@
 
    ])
 
+(defn handle-midi-event
+  [{:keys [command channel key velocity] :as info} _timestamp]
+  (let [old-notes (:notes @state-atom)]
+    (case command
+      :on  (swap! state-atom update :notes assoc key info)
+      :off (swap! state-atom update :notes dissoc key)
+      :default)
+    (let [new-notes (:notes @state-atom)]
+      (when (and (not (seq old-notes)) (seq new-notes))
+        (swap! state-atom update :frame inc)))))
+
+(defn setup-midi!
+  [dev-description handler-fn]
+  (let [dev (or (:midi-dev @state-atom)
+                (midi/input-device dev-description))]
+    (midi/clear-handlers! dev)
+    (midi/add-handler! dev handler-fn)
+    (swap! state-atom assoc :midi-dev dev)))
+
+(defn release-midi!
+  []
+  (when-let [dev (:midi-dev @state-atom)]
+    (midi/clear-handlers! dev)))
+
 (defn setup []
+  (setup-midi! midi-device-description handle-midi-event)
   (q/background 0) ; black
   (q/frame-rate 32)
   (q/no-stroke))
@@ -167,4 +166,5 @@
 
   :setup setup
   :draw draw
-  :key-pressed key-pressed)
+  :key-pressed key-pressed
+  :on-close release-midi!)
