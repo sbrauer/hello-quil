@@ -87,15 +87,15 @@
       ;; add handler for crash that sets background to white
       (cond
         (kick? key)
-        (q/ellipse (/ (q/width) 2) (/ (q/height) 2) 500 500)
+        (let [size (* (q/height) 0.75)]
+          (q/ellipse (/ (q/width) 2) (/ (q/height) 2) size size))
 
         (snare? key)
-        (let [h 200
-              w 200
+        (let [h (q/height)
+              w (/ (q/width) 2)
               ;; FIXME: really reach into state-atom here???
-              x (- (* (if (zero? (mod (get-in @state-atom [:note-counts key]) 2)) 0.25 0.75)
-                      (q/width)) (/ w 2))
-              y (/ (- (q/height) h) 2)]
+              x (if (zero? (mod (get-in @state-atom [:note-counts key]) 2)) 0 w)
+              y 0]
           (q/rect x y w h))
 
         (closed-hat? key)
@@ -113,10 +113,10 @@
             (q/rect 0 y (q/width) h)))
 
         :default
-        (let [size 200
-              x (if (zero? (mod key 2)) 0  (- (q/width) size))
-              y (if (zero? (mod key 2)) 0 (- (q/height) size))]
-          (q/rect x y size size))))))
+        (let [size (/ (q/height) 2,)
+              x (* (q/width) (if (zero? (mod key 2)) 0.25 0.75))
+              y (* (q/height) (if (zero? (mod key 2)) 0.25 0.75))]
+          (q/ellipse x y size size))))))
 
 (defn clear-screen []
     (q/background 0))
@@ -124,9 +124,16 @@
 (defn compare-notes
   [n1 n2]
   (let [ch1 (:channel n1)
-        ch2 (:channel n2)]
+        ch2 (:channel n2)
+        k1 (:key n1)
+        k2 (:key n2)]
     (if (= ch1 ch2)
-      (compare (:key n1) (:key n2))
+      (if (percuss? ch1)
+        (cond
+          (kick? k1) 1
+          (kick? k2) -1
+          :default (compare k1 k2))
+        (compare k1 k2))
       (compare ch1 ch2))))
 
 (defn draw []
@@ -156,9 +163,9 @@
 (q/defsketch demo
   :title "midi quil fun"
 
-  ;;:size [640 480]
+  :size [640 480]
 
-  :size :fullscreen
+  ;;:size :fullscreen
   ;;:features [:keep-on-top]
 
   :setup setup
