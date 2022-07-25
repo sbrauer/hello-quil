@@ -81,32 +81,45 @@
           x (* key w)]
       (q/rect x y w h))
     (do
+      ;;(println "PERCUSS" note)
       ;; FIXME: refactor
       ;; add default handler for other notes (maybe render a square in one of the 4 corners at random?)
       ;; add handler for crash that sets background to white
-      (when (kick? key)
-        (q/ellipse (/ (q/width) 2) (/ (q/height) 2) 500 500))
-      (when (snare? key)
+      (cond
+        (kick? key)
+        (q/ellipse (/ (q/width) 2) (/ (q/height) 2) 500 500)
+
+        (snare? key)
         (let [h 200
               w 200
               ;; FIXME: really reach into state-atom here???
               x (- (* (if (zero? (mod (get-in @state-atom [:note-counts key]) 2)) 0.25 0.75)
                       (q/width)) (/ w 2))
               y (/ (- (q/height) h) 2)]
-          (q/rect x y w h)))
-      (when (closed-hat? key)
-        (q/fill 200)
-        (let [h (/ (q/width) 128)
-              y (- (* 0.75 (q/height)) (/ h 2))]
-          (q/rect 0 y (q/width) h)))
-      (when (open-hat? key)
-        (q/fill 200)
-        (let [h (/ (q/width) 128)
-              y (- (* 0.25 (q/height)) (/ h 2))]
-          (q/rect 0 y (q/width) h))))))
+          (q/rect x y w h))
+
+        (closed-hat? key)
+        (do
+          (q/fill 200)
+          (let [h (/ (q/width) 128)
+                y (- (* 0.75 (q/height)) (/ h 2))]
+            (q/rect 0 y (q/width) h)))
+
+        (open-hat? key)
+        (do
+          (q/fill 200)
+          (let [h (/ (q/width) 128)
+                y (- (* 0.25 (q/height)) (/ h 2))]
+            (q/rect 0 y (q/width) h)))
+
+        :default
+        (let [size 200
+              x (if (zero? (mod key 2)) 0  (- (q/width) size))
+              y (if (zero? (mod key 2)) 0 (- (q/height) size))]
+          (q/rect x y size size))))))
 
 (defn clear-screen []
-  (q/background 0))
+    (q/background 0))
 
 (defn compare-notes
   [n1 n2]
