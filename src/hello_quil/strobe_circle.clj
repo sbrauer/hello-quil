@@ -25,7 +25,7 @@
 
     (q/with-translation [center-x center-y]
       ;; Draw lines
-      (doseq [ang (range 0 360 10)]3
+      (doseq [ang (range 0 360 10)]
         (let [rang (q/radians (+ ang num))]
           (q/line 0
                   0
@@ -53,8 +53,7 @@
     (case k
       :+ (swap! state-atom update :frame-rate inc)
       :- (swap! state-atom update :frame-rate #(max 1 (dec %)))
-      ;; default expression to avoid "No matching clause" exception.
-      nil)
+      :default)
     (prn @state-atom)
     (q/frame-rate (:frame-rate @state-atom))))
 

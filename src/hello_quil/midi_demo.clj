@@ -4,7 +4,7 @@
             [uncomplicate.clojure-sound.midi :as midi]))
 
 ;; Specific to Sam's setup; should be a config
-(def midi-device-description "MIDISPORT 4x4 Anniv Port A")
+;;(def midi-device-description "MIDISPORT 4x4 Anniv Port A")
 ;;(def midi-device-description "MidiKeys")
  (def midi-device-description "IAC Driver IAC Bus 1")
 

@@ -17,12 +17,16 @@
        first))
 
 (defn input-devices
-  "Returns a list of description strings for input devices"
+  "Returns a list of input devices"
   []
   (->> (midi/device-info)
        (map midi/device)
-       (filter midi/transmitter?)
-       (mapv #(unc/info % :description))))
+       (filter midi/transmitter?)))
+
+(defn input-device-descriptions
+  "Returns a list of description strings for input devices"
+  []
+  (mapv #(unc/info % :description) (input-devices)))
 
 (defn add-handler!
   "dev is a MidiInDevice object
@@ -50,8 +54,8 @@
     (unc/close! dev)))
 
 (comment
-   ;; list our input devices
-  (input-devices)
+   ;; List our input device descriptions (to figure out what string to pass to input-device fn).
+  (input-device-descriptions)
 
   ;; pick a device
   (def device-description "IAC Driver IAC Bus 1")
@@ -68,6 +72,6 @@
   (clear-handlers! dev)
 
   ;; FIXME - figure out life cycle; currently after closing we can't get the handlers for the same hardware device to work again!
-  ;; bonus: make it work with with-open fn
+  ;; possible bonus: make it work with with-open fn
   (close! dev)
   )
