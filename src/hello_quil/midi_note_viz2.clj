@@ -6,6 +6,9 @@
 ;; Ideally should be configurable instead of hard-coded
 (def midi-device-description "IAC Driver IAC Bus 1")
 
+;; FIXME make controllable by keyboard (toggle with V key)
+(def velocity-sensitive? true)
+
 (def state-atom (atom {:midi-dev nil
                        :notes {}
                        :note-counts {}}))
@@ -68,14 +71,15 @@
 (defn crash? [k] (= 49 k))
 
 (defn draw-note
-  [{:keys [channel key] :as note}]
+  [{:keys [channel key velocity] :as note}]
   ;;(println "draw-note" note)
   (q/fill (note-key->color key))
   ;; FIXME: refactor, maybe using a multimethod
   (if-not (percuss? channel)
-    (let [h (q/height)
+    (let [h (cond-> (q/height)
+              velocity-sensitive? (* (/ velocity 127)))
           w (/ (q/width) 128)
-          y 0
+          y (- (q/height) h)
           x (* key w)]
       (q/rect x y w h))
     (do
@@ -126,13 +130,17 @@
         k2 (:key n2)]
     (if (= ch1 ch2)
       (if (percuss? ch1)
-        ;; Prioritize kick
+        ;; Prioritize kick (so it's above other percussion)
         (cond
           (kick? k1) 1
           (kick? k2) -1
           :default (compare k1 k2))
         (compare k1 k2))
-      (compare ch1 ch2))))
+      ;; Deprioritize percussion (so it's in behind other channels)
+      (cond
+        (percuss? ch1) -1
+        (percuss? ch2) 1
+        :default (compare ch1 ch2)))))
 
 (defn draw []
   ;;(println "DRAW" @state-atom)
