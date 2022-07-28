@@ -17,7 +17,7 @@
   (clear-screen)
   (q/no-fill)
   (q/stroke-weight 2)
-  (q/frame-rate 20))
+  (q/frame-rate 10))
 
 (defn draw-grid-of-circles
   [color grid-size rows-cols]
@@ -30,10 +30,12 @@
               y (* cell-size (+ 0.5 col))]
           (q/ellipse x y circle-size circle-size))))))
 
+(def max-rows-cols 4)
+
 (defn draw []
   (clear-screen)
   (let [fc (q/frame-count)
-        rows-cols (inc (mod (int (/ fc 64)) 8))
+        rows-cols (inc (mod (int (/ fc (* max-rows-cols max-rows-cols))) max-rows-cols))
         grid-size (* (q/height) 0.75)]
     (q/with-translation [(/ (- (q/width) grid-size) 2)
                          (/ (- (q/height) grid-size) 2)]
