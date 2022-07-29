@@ -7,7 +7,7 @@
 (def midi-device-description "IAC Driver IAC Bus 1")
 
 ;; FIXME make controllable by keyboard (toggle with V key)
-(def velocity-sensitive? true)
+(def velocity-sensitive? false)
 
 (def state-atom (atom {:midi-dev nil
                        :notes {}
@@ -47,15 +47,6 @@
   []
   (when-let [dev (:midi-dev @state-atom)]
     (midi/clear-handlers! dev)))
-
-(defn draw-vertical-bar
-  ;; num is 1-based (example: 1 of 3 total)
-  [num total]
-  (let [h (q/height)
-        w (/ (q/width) total)
-        y 0
-        x (* (dec num) w)]
-    (q/rect x y w h)))
 
 (defn percuss?
   [channel]
@@ -114,7 +105,7 @@
         (q/background 255)
 
         :default
-        (let [size (/ (q/height) 2,)
+        (let [size (/ (q/height) 2)
               x (* (q/width) (if (zero? (mod key 2)) 0.25 0.75))
               y (* (q/height) (if (zero? (mod key 2)) 0.25 0.75))]
           (q/ellipse x y size size))))))
@@ -162,18 +153,17 @@
 (defn setup
   []
   (setup-midi! midi-device-description handle-midi-event)
-  (q/background 0) ; black
+  (clear-screen)
   (q/frame-rate 16)
   (q/no-stroke))
 
 (q/defsketch demo
   :title "midi quil fun"
-
-  ;;:size [640 480]
-
-  :size :fullscreen
-  ;;:features [:keep-on-top]
-
   :setup setup
   :draw draw
-  :on-close release-midi!)
+  :on-close release-midi!
+
+  ;;:size [640 480]
+  :size :fullscreen
+  ;;:features [:keep-on-top]
+)
