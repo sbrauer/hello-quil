@@ -42,6 +42,9 @@
   (when-let [dev (:midi-dev @state-atom)]
     (midi/clear-handlers! dev)))
 
+(defn clear-screen []
+    (q/background 0))
+
 (defn draw-note
   [{:keys [channel key velocity] :as note}]
   ;;(println "draw-note" note)
@@ -52,23 +55,20 @@
         x (* key w)]
     (q/rect x y w h)))
 
-(defn clear-screen []
-    (q/background 0))
-
 (defn draw []
   ;;(println "DRAW" @state-atom)
-  (let [{:keys [notes]} @state-atom]
+  #_(let [{:keys [notes]} @state-atom]
     (clear-screen)
     (doseq [note (vals notes)]
       (draw-note note))))
 
 (defn handle-midi-event
-  [event-info _timestamp]
+  [event-info timestamp]
   (let [{:keys [command channel key velocity]} event-info]
-    ;;(println command event-info)
+    (println command event-info timestamp)
     (case command
-      :on  (swap! state-atom update :notes assoc key event-info)
-      :off (swap! state-atom update :notes dissoc key)
+      :on  (swap! state-atom update-in [:notes key] #((fnil conj []) % {:event event-info :ts timestamp}))
+      :off (swap! state-atom update-in [:notes key] #((fnil conj []) % {:event event-info :ts timestamp}))
       :default)))
 
 (defn setup
