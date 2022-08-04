@@ -1,18 +1,12 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
-            [quil.middleware :as m]))
+            [quil.middleware :as m]
+            [hello-quil.colors :as colors]))
 
 (def black [0 0 0])
 
-;; https://www.schemecolor.com/retro.php
-(def colors
-  [[ 39  35  36] ;; Raisin Black
-   [131 183 153] ;; Dark Sea Green
-   [226 205 109] ;; Arylide Yellow
-   [194 178 143] ;; Sage
-   [228 216 180] ;; Cookies And Cream
-   [232 111 104] ;; Light Carmine Pink
-   ])
+;; pick a palette
+(def colors colors/retro)
 
 (defn clear-screen []
   (apply q/background black))

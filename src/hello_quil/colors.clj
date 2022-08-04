@@ -1,5 +1,25 @@
 (ns hello-quil.colors)
 
+;; https://www.schemecolor.com/retro.php
+(def retro
+  [[ 39  35  36] ;; Raisin Black
+   [131 183 153] ;; Dark Sea Green
+   [226 205 109] ;; Arylide Yellow
+   [194 178 143] ;; Sage
+   [228 216 180] ;; Cookies And Cream
+   [232 111 104] ;; Light Carmine Pink
+   ])
+
+;; https://www.schemecolor.com/colourful-beach.php
+(def beach
+  [[136 216 176] ;; Pearl Aqua
+   [255 253 243] ;; Milk
+   [254 208 106] ;; Crayola's Orange-Yellow
+   [249 110  90] ;; Bittersweet
+   [ 21 131 209] ;; Bright Navy Blue
+   [101 203 218] ;; Crayola's Sky Blue
+   ])
+
 ;; 128 colors (to cover full range of midi notes)
 ;; converted from https://lospec.com/palette-list/atari-2600-palette-ntsc-version
 (def atari-128-colors
