@@ -7,9 +7,14 @@
 ;; Ideally should be configurable instead of hard-coded
 (def midi-device-description "IAC Driver IAC Bus 1")
 
-(def window-seconds 4)
+(def window-seconds 8)
 (def window-microseconds (* 1000000 window-seconds))
 
+;; The :notes map is keyed by midi key (0-128).
+;; Each value is a map keyed by channel. Each value of that submap is a vector of note metadata maps, each with keys :vel, :on, and :off (maybe nil if we haven't received corresponding off yet).
+;; Using a vector as there can be multiple overlapping notes with the same channel and key!
+;; When a note off event comes in, we will try to match it up with the last
+;; corresponding note (on same channel and key) with nil :off.
 (def state-atom (atom {:midi-dev nil
                        :notes {}
                        :first-midi-ts-micros nil
@@ -18,7 +23,7 @@
 (defn current-epoch-millis []
   (inst-ms (Instant/now)))
 
-;; https://colorswall.com/palette/3261
+; https://colorswall.com/palette/3261
 (def diatonic-colors
   [[226  48  88] ;; Amaranth (C)
    [247  88  58] ;; Orange Soda (C#/D♭)
@@ -56,9 +61,6 @@
 
 (defn draw-note
   ;; FIXME: x and w should be based on start-ts and stop-ts relative to current-timestamp and window-microseconds
-  ;; Shit!  current-timestamp will only update when midi comes in.
-  ;; We need to change notion of time; maybe note the first midi timestamp we get
-  ;; as a base time, as well as our current timestamp in microseconds and normalize so that we can track time based on sys clock instead of midi.
   [{:keys [key start-ts stop-ts] :as note} current-timestamp]
   ;;(println "draw-note" note)
   (q/fill (note-key->color key))
@@ -71,36 +73,38 @@
 (defn draw []
   ;;(println "DRAW" @state-atom)
   (clear-screen)
-  (let [{:keys [notes timestamp]} @state-atom
-        ;; FIXME: we need to account for more than one note per key!!!
-        ;; Also move these code into handle-midi-event so that
-        ;; we do most calculation on midi event instead of in draw.
-        notes-by-key (reduce (fn [acc {:keys [event ts] :as note}]
-                               (let [{:keys [command key]} event]
-                                 (case command
-                                   :on (assoc-in acc [key :start-ts] ts)
-                                   :off (assoc-in acc [key :stop-ts] ts)
-                                   nil)))
-                             {}
-                             notes)]
-    (doseq [[key note] notes]
-      ;;(draw-note (assoc note :key key) timestamp)
-      )))
+  ;; FIXME
+  (let [{:keys [notes first-epoch-ts-millis]} @state-atom
+        end-millis (current-epoch-millis)
+        start-millis (- end-millis (* window-seconds 1000))
+        ]
+    #_(doseq [[key note] notes]
+        (draw-note (assoc note :key key) timestamp))))
+
+(defn track-note-event
+  [notes command velocity timestamp]
+  (let [notes (or notes [])]
+    (cond
+      (= :on command) (conj notes {:on timestamp :vel velocity})
+      (= :off command) (let [idx (first (keep-indexed (fn [idx item] (when-not (:off item) idx)) notes))]
+                         (cond-> notes
+                           idx (assoc-in [idx :off] timestamp)))
+      :default notes)))
 
 (defn handle-midi-event
   [event-info timestamp]
-  ;; Note first timestamps
+  ;; Note first timestamp of midi and system
   (when-not (:first-midi-ts-micros @state-atom)
     (swap! state-atom assoc
            :first-midi-ts-micros timestamp
            :first-epoch-ts-millis (current-epoch-millis)))
 
   (let [{:keys [command channel key velocity]} event-info]
-    (println command event-info timestamp)
-    (swap! state-atom assoc :timestamp timestamp)
-    ;; FIXME: purge notes off older than some window back from timestamp
+    ;;;14M(println command event-info timestamp)
+    (swap! state-atom assoc :midi-ts-micros timestamp)
+    ;; FIXME: Also purge notes off older than window-seconds back from timestamp
     (when (#{:on :off} command)
-      (swap! state-atom update :notes (fnil conj []) {:event event-info :ts timestamp}))))
+      (swap! state-atom update-in [:notes key channel] #(track-note-event % command velocity timestamp)))))
 
 (defn setup
   []
