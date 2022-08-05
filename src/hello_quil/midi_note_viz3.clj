@@ -61,8 +61,7 @@
 
 (defn draw-note
   ;; FIXME: x and w should be based on start-ts and stop-ts relative to current-timestamp and window-microseconds
-  [{:keys [key start-ts stop-ts] :as note} current-timestamp]
-  ;;(println "draw-note" note)
+  [key on off]
   (q/fill (note-key->color key))
   (let [h (/ (q/height) 128)
         w :FIXME-based-on-time
@@ -73,13 +72,14 @@
 (defn draw []
   ;;(println "DRAW" @state-atom)
   (clear-screen)
-  ;; FIXME
-  (let [{:keys [notes first-epoch-ts-millis]} @state-atom
+  (let [{:keys [notes first-epoch-ts-millis first-midi-ts-micros]} @state-atom
         end-millis (current-epoch-millis)
-        start-millis (- end-millis (* window-seconds 1000))
-        ]
-    #_(doseq [[key note] notes]
-        (draw-note (assoc note :key key) timestamp))))
+        start-millis (- end-millis (* window-seconds 1000))]
+    (doseq [[key channels] notes]
+      (doseq [[ch notes] channels]
+        (doseq [{:keys [on off] :as note} notes]
+          ;; FIXME: should we pass more time info, or relativize on and off here?
+          (draw-note key on off))))))
 
 (defn track-note-event
   [notes command velocity timestamp]
@@ -91,8 +91,26 @@
                            idx (assoc-in [idx :off] timestamp)))
       :default notes)))
 
+(defn purge-old-notes*
+  [notes cutoff-ts-micros]
+  (filter (fn [{:keys [off] :as note}]
+            (or (not off)
+                (< off cutoff-ts-micros)))
+          notes))
+
+(defn purge-old-notes
+  [{:keys [notes midi-ts-micros] :as state}]
+  (let [cutoff-ts-micros (- midi-ts-micros window-microseconds)
+        new-notes (reduce-kv (fn [acc key v]
+                               (update acc key reduce-kv (fn [acc ch notes]
+                                                           (update acc ch #(purge-old-notes* % cutoff-ts-micros)))))
+                             {}
+                             notes)]
+    (assoc state :notes new-notes)))
+
 (defn handle-midi-event
   [event-info timestamp]
+  ;; (println command event-info timestamp)
   ;; Note first timestamp of midi and system
   (when-not (:first-midi-ts-micros @state-atom)
     (swap! state-atom assoc
@@ -100,11 +118,12 @@
            :first-epoch-ts-millis (current-epoch-millis)))
 
   (let [{:keys [command channel key velocity]} event-info]
-    ;;;14M(println command event-info timestamp)
     (swap! state-atom assoc :midi-ts-micros timestamp)
-    ;; FIXME: Also purge notes off older than window-seconds back from timestamp
+
     (when (#{:on :off} command)
-      (swap! state-atom update-in [:notes key channel] #(track-note-event % command velocity timestamp)))))
+      (swap! state-atom update-in [:notes key channel] #(track-note-event % command velocity timestamp)))
+
+    (swap! state-atom purge-old-notes)))
 
 (defn setup
   []
