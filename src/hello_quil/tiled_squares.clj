@@ -6,7 +6,7 @@
 (def black [0 0 0])
 
 ;; pick a palette
-(def colors colors/retro)
+(def colors colors/beach)
 
 (defn clear-screen []
   (apply q/background black))
@@ -14,6 +14,7 @@
 (def state-atom (atom {:size 100 :num-colors 4}))
 
 (defn setup []
+  (q/no-stroke)
   (q/no-loop))
 
 (defn draw []
