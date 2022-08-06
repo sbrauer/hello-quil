@@ -58,28 +58,29 @@
     (q/background 0))
 
 (defn draw-note
-  ;; Here we expect on and off to be values between 0.0 and 1.0 (representing percentage of window width)
-  [key on off]
+  [key on off start end]
   (q/fill (note-key->color key))
   (let [win-w (q/width)
+        px-per-ms (/ win-w window-ms)
         h (/ (q/height) 128)
         y (* (- 128 key) h)
-        w (* (- off on) win-w)
-        x (* on win-w)]
+        x (if off
+            (* px-per-ms (- end off))
+            0)
+        w (* px-per-ms
+             (- (or off end) on))]
     (q/rect x y w h)))
 
 (defn draw []
   ;;(println "DRAW" @state-atom)
   (clear-screen)
-  (let [now (current-epoch-ms)
-        start (- now window-ms)
+  (let [end (current-epoch-ms)
+        start (- end window-ms)
         {:keys [notes]} @state-atom]
     (doseq [[key channels] notes]
       (doseq [[ch notes] channels]
         (doseq [{:keys [on off] :as note} notes]
-          (draw-note key
-                     (max 0 (/ (- on start) window-ms))
-                     (if off (/ (- off start) window-ms) 1)))))))
+          (draw-note key on off start end))))))
 
 (defn track-note-event
   [notes command velocity timestamp]
