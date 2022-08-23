@@ -73,23 +73,19 @@
     (q/rect x y w h)))
 
 (defn draw-background []
-  (let [line-count 8
+  (let [line-count 10
+        frame-count 20
         win-w (q/width)
         win-h (q/height)
         mid-w (/ win-w 2)
         horizon (* 0.5 win-h)
         grid-h (- win-h horizon)]
     (q/line 0 horizon win-w horizon)
+
+    ;; draw "moving" horizontal lines
     (doseq [offset (range line-count)]
-      ;; draw "moving" horizontal line
-      ;; FIXME: gap should be bigger closer to viewer (bottom of screen)
-      (let [gap-h (/ grid-h line-count)
-            line-h (+ horizon
-                      (mod (q/frame-count) gap-h)
-                      (* offset gap-h))
-            #_#_line-h (+ horizon
-                          (mod (q/frame-count) grid-h)
-                          (* grid-h (/ (math/expt offset 2))))]
+      (let [gap% (/ (math/expt (+ offset (/ (mod (q/frame-count) frame-count) frame-count)) 2) (math/expt line-count 2)) ;; REFACTOR!
+            line-h (+ horizon (* grid-h gap%))]
         (q/line 0 line-h win-w line-h)))
 
     ;; draw static vertical lines
