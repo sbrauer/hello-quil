@@ -90,6 +90,7 @@
       (= :off command) (let [idx (first (keep-indexed (fn [idx item] (when-not (:off item) idx)) notes))]
                          (cond-> notes
                            idx (assoc-in [idx :off] timestamp)))
+      ;; FIXME: Handle "all notes off" CC
       :default notes)))
 
 (defn purge-old-notes*
