@@ -84,18 +84,12 @@
         horizon (* 0.5 win-h)
         grid-h (- win-h horizon)
         line-count-sqr (sqr line-count)]
-    (q/line 0 horizon win-w horizon)
 
-    ;; draw "moving" horizontal lines
-    (doseq [offset (range line-count)]
-      (let [gap% (/ (sqr (+ offset (/ (mod (q/frame-count) frame-count) frame-count)))
-                    line-count-sqr)
-            line-h (+ horizon (* grid-h gap%))]
-        (q/line 0 line-h win-w line-h)))
+    (q/stroke 220)
 
     ;; draw static vertical lines
-    (let [line-count 40
-          top-w 23
+    (let [line-count 36
+          top-w 30
           bottom-w (* 4.0 (/ win-w line-count))]
       (doseq [x (range line-count)]
         (q/line (- mid-w (* x top-w))
@@ -105,7 +99,18 @@
         (q/line (+ mid-w (* x top-w))
                 horizon
                 (+ mid-w (* x bottom-w))
-                win-h)))))
+                win-h)))
+
+    (q/stroke 127)
+
+    (q/line 0 horizon win-w horizon)
+
+    ;; draw "moving" horizontal lines
+    (doseq [offset (range line-count)]
+      (let [gap% (/ (sqr (+ offset (/ (mod (q/frame-count) frame-count) frame-count)))
+                    line-count-sqr)
+            line-h (+ horizon (* grid-h gap%))]
+        (q/line 0 line-h win-w line-h)))))
 
 (defn draw []
   ;;(println "DRAW" @state-atom)
