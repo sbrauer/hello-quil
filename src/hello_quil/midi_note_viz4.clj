@@ -75,15 +75,15 @@
   [n]
   (* n n))
 
+(defn pow3
+  [n]
+  (* n n n))
+
 (defn draw-background []
-  (let [line-count 10
-        frame-count 20
-        win-w (q/width)
+  (let [win-w (q/width)
         win-h (q/height)
         mid-w (/ win-w 2)
-        horizon (* 0.5 win-h)
-        grid-h (- win-h horizon)
-        line-count-sqr (sqr line-count)]
+        horizon (* 0.5 win-h)]
 
     (q/stroke 220)
 
@@ -106,11 +106,17 @@
     (q/line 0 horizon win-w horizon)
 
     ;; draw "moving" horizontal lines
-    (doseq [offset (range line-count)]
-      (let [gap% (/ (sqr (+ offset (/ (mod (q/frame-count) frame-count) frame-count)))
-                    line-count-sqr)
-            line-h (+ horizon (* grid-h gap%))]
-        (q/line 0 line-h win-w line-h)))))
+    (let [frame-count 20
+          frame% (/ (mod (q/frame-count) frame-count) frame-count)
+          line-count 10
+          grid-h (- win-h horizon)
+          gap-fn #_sqr pow3
+          max-gap (gap-fn line-count)]
+      (doseq [offset (range line-count)]
+        (let [gap% (/ (gap-fn (+ offset frame%))
+                      max-gap)
+              line-h (+ horizon (* grid-h gap%))]
+          (q/line 0 line-h win-w line-h))))))
 
 (defn draw []
   ;;(println "DRAW" @state-atom)
