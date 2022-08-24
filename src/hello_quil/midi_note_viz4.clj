@@ -1,8 +1,7 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [hello-quil.midi-util :as midi]
-            [clojure.math.numeric-tower :as math])
+            [hello-quil.midi-util :as midi])
   (:import java.time.Instant))
 
 ;; Ideally should be configurable instead of hard-coded
@@ -72,6 +71,10 @@
              (- (or off end) on))]
     (q/rect x y w h)))
 
+(defn sqr
+  [n]
+  (* n n))
+
 (defn draw-background []
   (let [line-count 10
         frame-count 20
@@ -79,27 +82,28 @@
         win-h (q/height)
         mid-w (/ win-w 2)
         horizon (* 0.5 win-h)
-        grid-h (- win-h horizon)]
+        grid-h (- win-h horizon)
+        line-count-sqr (sqr line-count)]
     (q/line 0 horizon win-w horizon)
 
     ;; draw "moving" horizontal lines
     (doseq [offset (range line-count)]
-      (let [gap% (/ (math/expt (+ offset (/ (mod (q/frame-count) frame-count) frame-count)) 2) (math/expt line-count 2)) ;; REFACTOR!
+      (let [gap% (/ (sqr (+ offset (/ (mod (q/frame-count) frame-count) frame-count)))
+                    line-count-sqr)
             line-h (+ horizon (* grid-h gap%))]
         (q/line 0 line-h win-w line-h)))
 
     ;; draw static vertical lines
     (let [line-count 40
-          focal-h horizon
           top-w 23
           bottom-w (* 4.0 (/ win-w line-count))]
       (doseq [x (range line-count)]
         (q/line (- mid-w (* x top-w))
-                focal-h
+                horizon
                 (- mid-w (* x bottom-w))
                 win-h)
         (q/line (+ mid-w (* x top-w))
-                focal-h
+                horizon
                 (+ mid-w (* x bottom-w))
                 win-h)))))
 
