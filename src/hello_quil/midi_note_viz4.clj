@@ -71,13 +71,9 @@
              (- (or off end) on))]
     (q/rect x y w h)))
 
-(defn sqr
-  [n]
-  (* n n))
-
-(defn pow3
-  [n]
-  (* n n n))
+(defn pow
+  [n p]
+  (reduce * (repeat p n)))
 
 (defn draw-background []
   (let [win-w (q/width)
@@ -88,9 +84,9 @@
     (q/stroke 220)
 
     ;; draw static vertical lines
-    (let [line-count 36
-          top-w 30
-          bottom-w (* 4.0 (/ win-w line-count))]
+    (let [line-count 30
+          top-w 32
+          bottom-w (* 5.0 (/ win-w line-count))]
       (doseq [x (range line-count)]
         (q/line (- mid-w (* x top-w))
                 horizon
@@ -110,7 +106,7 @@
           frame% (/ (mod (q/frame-count) frame-count) frame-count)
           line-count 10
           grid-h (- win-h horizon)
-          gap-fn #_sqr pow3
+          gap-fn #(pow % 3)
           max-gap (gap-fn line-count)]
       (doseq [offset (range line-count)]
         (let [gap% (/ (gap-fn (+ offset frame%))
