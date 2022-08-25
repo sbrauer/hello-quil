@@ -75,13 +75,14 @@
   [n p]
   (reduce * (repeat p n)))
 
-(defn draw-background []
+(defn draw-background
+  [{:keys [vcolor hcolor] :as config}]
   (let [win-w (q/width)
         win-h (q/height)
         mid-w (/ win-w 2)
         horizon (* 0.5 win-h)]
 
-    (q/stroke 220)
+    (apply q/stroke vcolor)
 
     ;; draw static vertical lines
     (let [line-count 30
@@ -97,7 +98,7 @@
                 (+ mid-w (* x bottom-w))
                 win-h)))
 
-    (q/stroke 127)
+    (apply q/stroke hcolor)
 
     (q/line 0 horizon win-w horizon)
 
@@ -106,7 +107,7 @@
           frame% (/ (mod (q/frame-count) frame-count) frame-count)
           line-count 10
           grid-h (- win-h horizon)
-          gap-fn #(pow % 3)
+          gap-fn #(pow % 2)
           max-gap (gap-fn line-count)]
       (doseq [offset (range line-count)]
         (let [gap% (/ (gap-fn (+ offset frame%))
@@ -118,7 +119,7 @@
   ;;(println "DRAW" @state-atom)
   (clear-screen)
   (q/stroke 200)
-  (draw-background)
+  (draw-background {:vcolor [220] :hcolor [127]})
   (q/no-stroke)
   (let [end (current-epoch-ms)
         start (- end window-ms)
