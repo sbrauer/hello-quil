@@ -16,7 +16,7 @@
 (defn setup []
   (clear-screen)
   (q/no-fill)
-  (q/stroke-weight 2)
+  (q/stroke-weight 5)
   (q/frame-rate 10))
 
 (defn draw-grid-of-circles
