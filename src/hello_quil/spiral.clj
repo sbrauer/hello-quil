@@ -49,6 +49,7 @@
   :update update-state
   :draw draw-state
   :features [:keep-on-top]
+  :renderer :p3d
   ; This sketch uses functional-mode middleware.
   ; Check quil wiki for more info about middlewares and particularly
   ; fun-mode.

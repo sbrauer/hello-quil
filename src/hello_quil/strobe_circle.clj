@@ -60,6 +60,8 @@
 (q/defsketch demo
   :title "title goes here"
   :size :fullscreen ; [300 300]
+  :features [:keep-on-top]
+  :renderer :p3d
   :setup setup
   :draw draw
   :key-pressed key-pressed)
