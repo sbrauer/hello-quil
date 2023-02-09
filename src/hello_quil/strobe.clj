@@ -20,7 +20,6 @@
 
 (defn draw []
   (let [{:keys [colors color-idx rate]} @state-atom]
-    (q/frame-rate rate)
     (apply q/background (nth colors color-idx))
     (update-state!)))
 
@@ -42,6 +41,7 @@
       :r (reset-colors! state-atom)
       ;; default expression to avoid "No matching clause" exception.
       nil)
+    (q/frame-rate (:rate @state-atom))
     (prn @state-atom)))
 
 (q/defsketch hello-quil
