@@ -49,7 +49,7 @@
 ;; FIXME: Maybe support a key (like space) to reset/clear and pick new random center
 (defn key-pressed []
   (let [k (q/key-as-keyword)]
-    (prn "hey-pressed " k)
+    (prn "key-pressed " k)
     (case k
       :+ (swap! state-atom update :frame-rate inc)
       :- (swap! state-atom update :frame-rate #(max 1 (dec %)))

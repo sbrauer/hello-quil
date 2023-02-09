@@ -120,7 +120,7 @@
 
 (defn key-pressed []
   (let [k (q/key-as-keyword)]
-    (prn "hey-pressed " k)
+    (prn "key-pressed " k)
     (case k
       :space (swap! state-atom update :palette-idx #(mod (inc %) (count palettes)))
       (q/redraw))))

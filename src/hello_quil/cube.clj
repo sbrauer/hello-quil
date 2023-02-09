@@ -47,7 +47,7 @@
 
 (defn key-pressed []
   (when-let [k (q/key-as-keyword)]
-    ;;(prinln "hey-pressed " k)
+    ;;(prinln "key-pressed " k)
     (case k
       :x (swap! state-atom update :x-locked? not)
       :y (swap! state-atom update :y-locked? not)
