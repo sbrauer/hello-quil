@@ -1,7 +1,7 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [hello-quil.midi-util :as midi])
+            [overtone.midi :as midi])
   (:import java.time.Instant))
 
 ;; Ideally should be configurable instead of hard-coded
@@ -34,7 +34,7 @@
    [233  87 178] ;; Brilliant Rose (B)
    ])
 
-(defn note-key->color
+(defn note->color
   [note]
   (nth diatonic-colors (mod note 12)))
 
@@ -43,23 +43,16 @@
 
 (defn setup-midi!
   [dev-description handler-fn]
-  (let [dev (or (:midi-dev @state-atom)
-                (midi/input-device dev-description))]
-    (midi/clear-handlers! dev)
-    (midi/add-handler! dev handler-fn)
+  (let [dev (midi/midi-in dev-description)]
+    (midi/midi-handle-events dev handler-fn)
     (swap! state-atom assoc :midi-dev dev)))
-
-(defn release-midi!
-  []
-  (when-let [dev (:midi-dev @state-atom)]
-    (midi/clear-handlers! dev)))
 
 (defn clear-screen []
     (q/background 0))
 
 (defn draw-note
   [key on off start end]
-  (q/fill (note-key->color key))
+  (q/fill (note->color key))
   (let [win-w (q/width)
         px-per-ms (/ win-w window-ms)
         h (/ (q/height) 128)
@@ -86,8 +79,8 @@
   [notes command velocity timestamp]
   (let [notes (or notes [])]
     (cond
-      (= :on command) (conj notes {:on timestamp :vel velocity})
-      (= :off command) (let [idx (first (keep-indexed (fn [idx item] (when-not (:off item) idx)) notes))]
+      (= :note-on command) (conj notes {:on timestamp :vel velocity})
+      (= :note-off command) (let [idx (first (keep-indexed (fn [idx item] (when-not (:off item) idx)) notes))]
                          (cond-> notes
                            idx (assoc-in [idx :off] timestamp)))
       ;; FIXME: Handle "all notes off" CC
@@ -110,12 +103,12 @@
    notes))
 
 (defn handle-midi-event
-  [event-info _timestamp]
-  ;; (println command event-info timestamp)
+  [event]
+  ;; (println command event)
   (let [now (current-epoch-ms)
-        {:keys [command channel key velocity]} event-info]
-    (when (#{:on :off} command)
-      (swap! state-atom update-in [:notes key channel] #(track-note-event % command velocity now)))
+        {:keys [command channel note velocity]} event]
+    (when (#{:note-on :note-off} command)
+      (swap! state-atom update-in [:notes note channel] #(track-note-event % command velocity now)))
     (swap! state-atom update :notes purge-old-notes (- now window-ms))))
 
 (defn setup
@@ -129,9 +122,8 @@
   :title "midi quil fun"
   :setup setup
   :draw draw
-  :on-close release-midi!
 
-  ;;:size [640 480]
-  :size :fullscreen
+  :size [640 480]
+  ;; :size :fullscreen
   ;;:features [:keep-on-top]
 )

@@ -1,7 +1,7 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [hello-quil.midi-util :as midi]
+            [overtone.midi :as midi]
             [hello-quil.colors :as colors]))
 
 ;; Ideally should be configurable instead of hard-coded
@@ -41,24 +41,17 @@
 
 (defn setup-midi!
   [dev-description handler-fn]
-  (let [dev (or (:midi-dev @state-atom)
-                (midi/input-device dev-description))]
-    (midi/clear-handlers! dev)
-    (midi/add-handler! dev handler-fn)
+  (let [dev (midi/midi-in dev-description)]
+    (midi/midi-handle-events dev handler-fn)
     (swap! state-atom assoc :midi-dev dev)))
 
-(defn release-midi!
-  []
-  (when-let [dev (:midi-dev @state-atom)]
-    (midi/clear-handlers! dev)))
-
 (defn handle-midi-event
-  [event-info _timestamp]
-  (let [{:keys [command channel key velocity]} event-info]
-    (println command event-info)
+  [event]
+  (let [{:keys [command channel note velocity]} event]
+    (println command event)
     (case command
-      :on  (swap! state-atom update :notes assoc key event-info)
-      :off (swap! state-atom update :notes dissoc key)
+      :note-on  (swap! state-atom update :notes assoc note event)
+      :note-off (swap! state-atom update :notes dissoc note)
       :default)))
 
 (defn setup
@@ -79,5 +72,4 @@
   ;;:features [:keep-on-top]
 
   :setup setup
-  :draw draw
-  :on-close release-midi!)
+  :draw draw)

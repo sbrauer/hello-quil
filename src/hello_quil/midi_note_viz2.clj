@@ -1,7 +1,7 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [hello-quil.midi-util :as midi]))
+            [overtone.midi :as midi]))
 
 ;; Ideally should be configurable instead of hard-coded
 (def midi-device-description "IAC Driver IAC Bus 1")
@@ -29,7 +29,7 @@
    [233  87 178] ;; Brilliant Rose (B)
    ])
 
-(defn note-key->color
+(defn note->color
   [note]
   (nth diatonic-colors (mod note 12))
   ;;(nth note-colors note)
@@ -37,16 +37,9 @@
 
 (defn setup-midi!
   [dev-description handler-fn]
-  (let [dev (or (:midi-dev @state-atom)
-                (midi/input-device dev-description))]
-    (midi/clear-handlers! dev)
-    (midi/add-handler! dev handler-fn)
+  (let [dev (midi/midi-in dev-description)]
+    (midi/midi-handle-events dev handler-fn)
     (swap! state-atom assoc :midi-dev dev)))
-
-(defn release-midi!
-  []
-  (when-let [dev (:midi-dev @state-atom)]
-    (midi/clear-handlers! dev)))
 
 (defn percuss?
   [channel]
@@ -62,52 +55,52 @@
 (defn crash? [k] (= 49 k))
 
 (defn draw-note
-  [{:keys [channel key velocity] :as note}]
+  [{:keys [channel note velocity] :as note}]
   ;;(println "draw-note" note)
-  (q/fill (note-key->color key))
+  (q/fill (note->color note))
   ;; FIXME: refactor, maybe using a multimethod
   (if-not (percuss? channel)
     (let [h (cond-> (q/height)
               velocity-sensitive? (* (/ velocity 127)))
           w (/ (q/width) 128)
           y (- (q/height) h)
-          x (* key w)]
+          x (* note w)]
       (q/rect x y w h))
     (do
       (cond
-        (kick? key)
+        (kick? note)
         (let [size (* (q/height) 0.75)]
           (q/ellipse (/ (q/width) 2) (/ (q/height) 2) size size))
 
-        (snare? key)
+        (snare? note)
         (let [h (q/height)
               w (/ (q/width) 2)
               ;; FIXME: really reach into state-atom here???
-              x (if (zero? (mod (get-in @state-atom [:note-counts key]) 2)) 0 w)
+              x (if (zero? (mod (get-in @state-atom [:note-counts note]) 2)) 0 w)
               y 0]
           (q/rect x y w h))
 
-        (closed-hat? key)
+        (closed-hat? note)
         (do
           (q/fill 200)
           (let [h (/ (q/width) 128)
                 y (- (* 0.75 (q/height)) (/ h 2))]
             (q/rect 0 y (q/width) h)))
 
-        (open-hat? key)
+        (open-hat? note)
         (do
           (q/fill 200)
           (let [h (/ (q/width) 128)
                 y (- (* 0.25 (q/height)) (/ h 2))]
             (q/rect 0 y (q/width) h)))
 
-        (crash? key)
+        (crash? note)
         (q/background 255)
 
         :default
         (let [size (/ (q/height) 2)
-              x (* (q/width) (if (zero? (mod key 2)) 0.25 0.75))
-              y (* (q/height) (if (zero? (mod key 2)) 0.25 0.75))]
+              x (* (q/width) (if (zero? (mod note 2)) 0.25 0.75))
+              y (* (q/height) (if (zero? (mod note 2)) 0.25 0.75))]
           (q/ellipse x y size size))))))
 
 (defn clear-screen []
@@ -117,8 +110,8 @@
   [n1 n2]
   (let [ch1 (:channel n1)
         ch2 (:channel n2)
-        k1 (:key n1)
-        k2 (:key n2)]
+        k1 (:note n1)
+        k2 (:note n2)]
     (if (= ch1 ch2)
       (if (percuss? ch1)
         ;; Prioritize kick (so it's above other percussion)
@@ -141,13 +134,13 @@
       (draw-note note))))
 
 (defn handle-midi-event
-  [event-info _timestamp]
-  (let [{:keys [command channel key velocity]} event-info]
-    ;;(println command event-info)
+  [event]
+  (let [{:keys [command channel note velocity]} event]
+    ;;(println command event)
     (case command
-      :on  (do (swap! state-atom update :notes assoc key event-info)
-               (swap! state-atom update :note-counts update key (fnil inc 0)))
-      :off (swap! state-atom update :notes dissoc key)
+      :note-on  (do (swap! state-atom update :notes assoc note event)
+                    (swap! state-atom update :note-counts update note (fnil inc 0)))
+      :note-off (swap! state-atom update :notes dissoc note)
       :default)))
 
 (defn setup
@@ -161,9 +154,8 @@
   :title "midi quil fun"
   :setup setup
   :draw draw
-  :on-close release-midi!
 
-  ;;:size [640 480]
-  :size :fullscreen
+  :size [640 480]
+  ;; :size :fullscreen
   ;;:features [:keep-on-top]
 )

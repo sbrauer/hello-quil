@@ -1,7 +1,7 @@
 (ns hello-quil.core
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [hello-quil.midi-util :as midi]))
+            [overtone.midi :as midi]))
 
 ;; Ideally should be configurable instead of hard-coded
 (def midi-device-description "IAC Driver IAC Bus 1")
@@ -48,11 +48,11 @@
    ])
 
 (defn handle-midi-event
-  [{:keys [command channel key velocity] :as info} _timestamp]
+  [{:keys [command channel note velocity] :as info}]
   (let [old-notes (:notes @state-atom)]
     (case command
-      :on  (swap! state-atom update :notes assoc key info)
-      :off (swap! state-atom update :notes dissoc key)
+      :note-on  (swap! state-atom update :notes assoc note info)
+      :note-off (swap! state-atom update :notes dissoc note)
       :default)
     (let [new-notes (:notes @state-atom)]
       (when (and (not (seq old-notes)) (seq new-notes))
@@ -60,16 +60,9 @@
 
 (defn setup-midi!
   [dev-description handler-fn]
-  (let [dev (or (:midi-dev @state-atom)
-                (midi/input-device dev-description))]
-    (midi/clear-handlers! dev)
-    (midi/add-handler! dev handler-fn)
+  (let [dev (midi/midi-in dev-description)]
+    (midi/midi-handle-events dev handler-fn)
     (swap! state-atom assoc :midi-dev dev)))
-
-(defn release-midi!
-  []
-  (when-let [dev (:midi-dev @state-atom)]
-    (midi/clear-handlers! dev)))
 
 (defn setup []
   (setup-midi! midi-device-description handle-midi-event)
@@ -159,12 +152,11 @@
 (q/defsketch demo
   :title "midi quil fun"
 
-  ;;:size [640 480]
+  :size [640 480]
 
-  :size :fullscreen
+  ;;:size :fullscreen
   ;;:features [:keep-on-top]
 
   :setup setup
   :draw draw
-  :key-pressed key-pressed
-  :on-close release-midi!)
+  :key-pressed key-pressed)

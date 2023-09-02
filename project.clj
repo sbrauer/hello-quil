@@ -6,6 +6,6 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [quil "3.1.0"]
                  ;; for midi support
-                 [org.uncomplicate/clojure-sound "0.1.0"]
+                 [overtone/midi-clj "0.5.0"]
                  ;; for animated gif output
                  [gil "1.0.0-SNAPSHOT"]])
