@@ -85,17 +85,17 @@
        ;; Absolute speed settings. Maybe tweak some of these...
        (+ (* 5 octave) 0) "set speed 0.1"
        (+ (* 5 octave) 1) "set speed 0.2"
-       (+ (* 5 octave) 2) "set speed 0.3"
+       (+ (* 5 octave) 2) "set speed 0.35"
        (+ (* 5 octave) 3) "set speed 0.5"
        (+ (* 5 octave) 4) "set speed 0.7"
-       (+ (* 5 octave) 5) "set speed 0.9"
+       (+ (* 5 octave) 5) "set speed 0.85"
        (+ (* 5 octave) 6) "set speed 1.0" ;; normal
-       (+ (* 5 octave) 7) "set speed 1.1"
-       (+ (* 5 octave) 8) "set speed 1.3"
-       (+ (* 5 octave) 9) "set speed 1.5"
-       (+ (* 5 octave) 10) "set speed 1.7"
-       (+ (* 5 octave) 11) "set speed 1.9"
-       (+ (* 5 octave) 12) "set speed 2.0"}}})
+       (+ (* 5 octave) 7) "set speed 1.25"
+       (+ (* 5 octave) 8) "set speed 1.5"
+       (+ (* 5 octave) 9) "set speed 1.75"
+       (+ (* 5 octave) 10) "set speed 2.0"
+       (+ (* 5 octave) 11) "set speed 3.0"
+       (+ (* 5 octave) 12) "set speed 4.0"}}})
 
 (def dev (midi/midi-in midi-device-name))
 
