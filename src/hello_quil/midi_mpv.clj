@@ -9,9 +9,10 @@
 (def socket-path "/tmp/mpvsocket")
 (def midi-device-name "IAC Driver IAC Bus 1")
 
-;; Each device as a :description (which can be used to identify the device in a human-friendly way)
 (comment
+  ;; Each device as a :description (which can be used to identify the device in a human-friendly way)
   (mapv :description (midi/midi-sources))
+  ;; FIXME: Maybe add a command line option like `--list-devices` that prints these two stdout.
   )
 
 (defn socket-writer
@@ -46,6 +47,7 @@
        (+ (* 2 octave) 9) "script-message-to sammy safe-playlist-play-index 9"
        (+ (* 2 octave) 10) "script-message-to sammy safe-playlist-play-index 10"
        (+ (* 2 octave) 11) "script-message-to sammy safe-playlist-play-index 11"
+
        (+ (* 3 octave) 0) "seek 0 absolute"
        (+ (* 3 octave) 1) "seek 8 absolute-percent"
        (+ (* 3 octave) 2) "seek 16 absolute-percent"
@@ -59,25 +61,23 @@
        (+ (* 3 octave) 10) "seek 83 absolute-percent"
        (+ (* 3 octave) 11) "seek 91 absolute-percent"
 
+       ;; FIXME: Are these misc mappings good?  Maybe tweak. Used to have a few cycle commands, but replaced with sets.
 
-       ;; FIXME: Are these misc mappings good?  Maybe tweak. Possible ditch cycles and just have set commands (for mute or sub-visability)
-       (+ (* 4 octave) 0) "cycle pause"
-       (+ (* 4 octave) 1) "set pause yes"
-       (+ (* 4 octave) 2) "ab-loop"
-       (+ (* 4 octave) 3) "set pause no"
-       (+ (* 4 octave) 4) "cycle mute"
-       (+ (* 4 octave) 5) "cycle sub-visibility"
-
-       ;; copied from https://github.com/mpv-player/mpv/blob/master/etc/input.conf
-       (+ (* 4 octave) 6) "multiply speed 1/1.1" ;; F# slower
-       (+ (* 4 octave) 8) "set speed 1.0" ;; G# reset to normal
-       (+ (* 4 octave) 10) "multiply speed 1.1"  ;; A# faster
-       ;; FIXME: Maybe also add an octave of specific speed settings, like we did seek.
-
+       (+ (* 4 octave) 0) "set pause yes" ;; C pause
+       (+ (* 4 octave) 2) "set pause no" ;; D play
+       (+ (* 4 octave) 1) "set mute yes" ;; C# mute
+       (+ (* 4 octave) 3) "set mute no" ;; D# unmute
+       (+ (* 4 octave) 4) "set sub-visibility no" ;; E subs off
+       (+ (* 4 octave) 5) "set sub-visibility yes" ;; F subs on
        (+ (* 4 octave) 7) "set panscan 0.0" ;; G panscan off
        (+ (* 4 octave) 9) "set panscan 1.0" ;; A panscan on
 
-       (+ (* 4 octave) 11) "playlist-shuffle"}}})
+       (+ (* 4 octave) 6) "multiply speed 1/1.1" ;; F# slower
+       (+ (* 4 octave) 8) "set speed 1.0"        ;; G# reset to normal
+       (+ (* 4 octave) 10) "multiply speed 1.1"  ;; A# faster
+
+       (+ (* 4 octave) 11) "ab-loop"  ;; B ab-loop start/end/off
+}}})
 
 (def dev (midi/midi-in midi-device-name))
 
@@ -91,30 +91,3 @@
                  cmd)]
        (when cmd
          (mpv-command writer cmd)))))
-
-
-(comment
-  (mpv-command writer "cycle pause")
-  (mpv-command writer "script-message-to sammy safe-playlist-play-index 0")
-  )
-
-
-
-;; Note that currently we're focusing on receiving midi input.
-
-(comment
-  ;; list input devices (returns collection of maps)
-  (midi/midi-sources)
-
-
-  ;; Get the input device for a given description
-
-
-  ;; Handle midi input events (note that an optional second fn may be specified to handle sysex events)
-
-
-  ;; a few sample midi events (some fields omitted for brevity; all msgs have :timestamp and :device as well)
-  {:channel 0 :command :note-on  :note 45 :velocity 100} ;; note-on/off also have :data1 (same as :note) and :data2 (:velocity)
-  {:channel 0 :command :note-off :note 45 :velocity 64}
-  {:channel 0 :command :control-change :data1 123 :data2 0} ;; :data1 is the CC# and :data2 is the value
-  )
