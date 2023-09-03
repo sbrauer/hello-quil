@@ -28,6 +28,15 @@
   (with-open [writer (socket-writer socket-path)]
     (.println writer s)))
 
+;; Use this to interpret the data1 and data2 from a :pitch-bend command event.
+(defn calculate-14-bit-value
+  "Calculates the the 14 bit value given two integers
+representing the high and low parts of a 14 bit value."
+  [lower higher]
+  (bit-or (bit-and lower 0x7f)
+   (bit-shift-left (bit-and higher 0x7f)
+     7)))
+
 (def octave 12)
 
 (def commands
@@ -65,8 +74,8 @@
 
        (+ (* 4 octave) 0) "set pause yes"          ;; C pause
        (+ (* 4 octave) 2) "set pause no"           ;; D play
-       (+ (* 4 octave) 1) "set panscan 0.0"        ;; C# panscan off
-       (+ (* 4 octave) 3) "set panscan 1.0"        ;; D# panscan on
+       (+ (* 4 octave) 1) "set panscan 1.0"        ;; C# panscan on
+       (+ (* 4 octave) 3) "set panscan 0.0"        ;; D# panscan off
        (+ (* 4 octave) 4) "set mute yes"           ;; E mute
        (+ (* 4 octave) 5) "set mute no"            ;; F unmute
        (+ (* 4 octave) 7) "set sub-visibility no"  ;; G subs off
@@ -97,15 +106,16 @@
        (+ (* 5 octave) 11) "set speed 3.0"
        (+ (* 5 octave) 12) "set speed 4.0"}}})
 
+;; FIXME: extend to support pitch-bend (for speed) and mod wheel CC #1 for seek.
+(defn event->command
+  [{:keys [channel command data1] :as event}]
+  (get-in commands [channel command data1]))
+
 (def dev (midi/midi-in midi-device-name))
 
 (midi/midi-handle-events
    dev
    (fn [{:keys [channel command data1] :as event}]
-     ;; (println "we got midi!" event)
-     (let [cmd (get-in commands [channel command data1])
-           cmd (if (fn? cmd)
-                 (cmd event)
-                 cmd)]
-       (when cmd
-         (mpv-command socket-path cmd)))))
+     (println "we got midi!" (dissoc event :device :msg))
+     (when-let [cmd (event->command event)]
+       (mpv-command socket-path cmd))))
