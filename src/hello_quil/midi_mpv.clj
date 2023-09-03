@@ -20,15 +20,13 @@
   (let [address (UnixSocketAddress. socket-path)
         channel (UnixSocketChannel/open address)
         out (Channels/newOutputStream channel)]
-    (PrintWriter. out)))
-
-(def writer (socket-writer socket-path))
+    (PrintWriter. out true)))
 
 (defn mpv-command
-  [writer s]
+  [socket-path s]
   (println "mpv-command" s)
-  (.write writer (str s "\n"))
-  (.flush writer))
+  (with-open [writer (socket-writer socket-path)]
+    (.println writer s)))
 
 (def octave 12)
 
@@ -110,4 +108,4 @@
                  (cmd event)
                  cmd)]
        (when cmd
-         (mpv-command writer cmd)))))
+         (mpv-command socket-path cmd)))))
