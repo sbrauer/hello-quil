@@ -26,7 +26,7 @@
 
 (defn mpv-command
   [writer s]
-  ;; (println "mpv-command" s)
+  (println "mpv-command" s)
   (.write writer (str s "\n"))
   (.flush writer))
 
@@ -63,21 +63,39 @@
 
        ;; FIXME: Are these misc mappings good?  Maybe tweak. Used to have a few cycle commands, but replaced with sets.
 
-       (+ (* 4 octave) 0) "set pause yes" ;; C pause
-       (+ (* 4 octave) 2) "set pause no" ;; D play
-       (+ (* 4 octave) 1) "set mute yes" ;; C# mute
-       (+ (* 4 octave) 3) "set mute no" ;; D# unmute
-       (+ (* 4 octave) 4) "set sub-visibility no" ;; E subs off
-       (+ (* 4 octave) 5) "set sub-visibility yes" ;; F subs on
-       (+ (* 4 octave) 7) "set panscan 0.0" ;; G panscan off
-       (+ (* 4 octave) 9) "set panscan 1.0" ;; A panscan on
+       (+ (* 4 octave) 0) "set pause yes"          ;; C pause
+       (+ (* 4 octave) 2) "set pause no"           ;; D play
+       (+ (* 4 octave) 1) "set panscan 0.0"        ;; C# panscan off
+       (+ (* 4 octave) 3) "set panscan 1.0"        ;; D# panscan on
+       (+ (* 4 octave) 4) "set mute yes"           ;; E mute
+       (+ (* 4 octave) 5) "set mute no"            ;; F unmute
+       (+ (* 4 octave) 7) "set sub-visibility no"  ;; G subs off
+       (+ (* 4 octave) 9) "set sub-visibility yes" ;; A subs on
 
        (+ (* 4 octave) 6) "multiply speed 1/1.1" ;; F# slower
        (+ (* 4 octave) 8) "set speed 1.0"        ;; G# reset to normal
        (+ (* 4 octave) 10) "multiply speed 1.1"  ;; A# faster
+       ;; Might want to replace these 3 black keys with:
+       ;; "seek -5" ;; jump back 5 secs like left arrow key
+       ;; "cycle pause"
+       ;; "seek 5" ;; jump forward 5 secs like right arrow key
 
-       (+ (* 4 octave) 11) "ab-loop"  ;; B ab-loop start/end/off
-}}})
+       (+ (* 4 octave) 11) "ab-loop" ;; B ab-loop start/end/off
+
+       ;; Hmmm...
+       (+ (* 5 octave) 0) "set speed 0.1"
+       (+ (* 5 octave) 1) "set speed 0.2"
+       (+ (* 5 octave) 2) "set speed 0.3"
+       (+ (* 5 octave) 3) "set speed 0.5"
+       (+ (* 5 octave) 4) "set speed 0.7"
+       (+ (* 5 octave) 5) "set speed 0.9"
+       (+ (* 5 octave) 6) "set speed 1.0" ;; normal
+       (+ (* 5 octave) 7) "set speed 1.1"
+       (+ (* 5 octave) 8) "set speed 1.3"
+       (+ (* 5 octave) 9) "set speed 1.5"
+       (+ (* 5 octave) 10) "set speed 1.7"
+       (+ (* 5 octave) 11) "set speed 1.9"
+       (+ (* 5 octave) 12) "set speed 2.0"}}})
 
 (def dev (midi/midi-in midi-device-name))
 
