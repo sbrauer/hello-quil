@@ -33,6 +33,8 @@
 (def octave 12)
 
 (def commands
+  ;; FIXME: Add some CC commands at least as examples; say pitchbend to speed or modwheel for seek.
+  ;; FIXME: Perhaps also add support for multiple sockets and figure out how to route events to sockets.
   {0 {:note-on
       ;; DRY this up ofc
       {(+ (* 2 octave) 0) "script-message-to sammy safe-playlist-play-index 0"
