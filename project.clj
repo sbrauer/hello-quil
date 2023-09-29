@@ -8,6 +8,4 @@
                  ;; for midi support
                  [overtone/midi-clj "0.5.0"]
                  ;; for animated gif output
-                 [gil "1.0.0-SNAPSHOT"]
-                 ;; FIXME: for unix domain sockets
-                 [com.github.jnr/jnr-unixsocket "0.38.20"]])
+                 [gil "1.0.0-SNAPSHOT"]])
